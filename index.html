@@ -219,6 +219,17 @@
   .bullet-btn{ appearance:none; border:none; background:transparent; color:var(--text-faint); cursor:pointer; font:inherit; font-size:.74rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; padding:3px 7px; border-radius:6px; }
   .bullet-btn:hover{background:var(--surface-3); color:var(--text)}
   .bullet-btn:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+  .task-link-row{display:flex; align-items:center; gap:6px}
+  .task-link-row .lk-ic{flex:none; width:16px; height:16px; color:var(--text-faint); display:grid; place-items:center}
+  .task-link-row .lk-ic svg{width:16px; height:16px}
+  .task-link{ flex:1; min-width:0; font:inherit; font-size:.8rem; color:var(--accent-ink); background:var(--surface-2); border:1px solid var(--border-strong); border-radius:8px; padding:6px 9px; direction:ltr; text-align:start; }
+  .task-link:focus{outline:none; border-color:var(--accent); background:var(--surface)}
+  .task-link::placeholder{color:var(--text-faint); direction:rtl}
+  .lk-open{ appearance:none; flex:none; width:30px; height:30px; border-radius:8px; cursor:pointer; border:1px solid var(--border-strong); background:var(--surface); color:var(--accent); display:none; place-items:center; transition:background .13s}
+  .lk-open.show{display:grid}
+  .lk-open:hover{background:var(--accent-weak)}
+  .lk-open:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+  .lk-open svg{width:15px; height:15px}
   .task-empty{font-size:.82rem; color:var(--text-faint); padding:6px 2px 8px; text-align:center}
   .task-add{display:flex; align-items:center; gap:9px; margin-top:2px}
   .task-add .input{flex:1}
@@ -647,7 +658,22 @@
     bul.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="6" cy="12" r="1.6"></circle><path d="M11 12h8"></path></svg>בולט';
     bul.addEventListener("click", function(){ toggleBullet(ta, task); });
     tools.appendChild(bul);
-    main.appendChild(ta); main.appendChild(tools);
+
+    // Jira link row
+    var linkRow=document.createElement("div"); linkRow.className="task-link-row";
+    var lic=document.createElement("span"); lic.className="lk-ic";
+    lic.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 14.5l5-5M10.8 6.7l1.6-1.6a3.7 3.7 0 0 1 5.3 5.3l-1.6 1.6M13.2 17.3l-1.6 1.6a3.7 3.7 0 0 1-5.3-5.3l1.6-1.6"></path></svg>';
+    var linkInput=document.createElement("input"); linkInput.className="task-link"; linkInput.type="text";
+    linkInput.value=task.link||""; linkInput.placeholder="קישור לג׳ירה (URL)"; linkInput.setAttribute("aria-label","קישור לג׳ירה");
+    var openA=document.createElement("button"); openA.type="button"; openA.className="lk-open"+(task.link?" show":"");
+    openA.title="פתח את הקישור בלשונית חדשה"; openA.setAttribute("aria-label","פתח את הקישור");
+    openA.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4"></path></svg>';
+    function normURL(u){ u=(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u)) u="https://"+u; return u; }
+    linkInput.addEventListener("input", function(){ task.link=linkInput.value.trim(); saveEvents(); openA.classList.toggle("show", !!task.link); });
+    openA.addEventListener("click", function(){ var u=normURL(task.link); if(u) window.open(u,"_blank","noopener"); });
+    linkRow.appendChild(lic); linkRow.appendChild(linkInput); linkRow.appendChild(openA);
+
+    main.appendChild(ta); main.appendChild(linkRow); main.appendChild(tools);
 
     var del=document.createElement("button"); del.type="button"; del.className="row-del"; del.setAttribute("aria-label","מחק משימה");
     del.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>';
