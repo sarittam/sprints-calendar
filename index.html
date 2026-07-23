@@ -82,6 +82,27 @@
   .todo-item .titxt:hover{background:var(--surface-2)}
   .todo-item .titxt:focus{outline:none; border-color:var(--col); background:var(--surface)}
   .todo-item.done .titxt{text-decoration:line-through; color:var(--text-faint)}
+  .todo-item-wrap{position:relative; border-radius:9px; padding:1px 4px; transition:background .13s}
+  .todo-item-wrap.hl{background:color-mix(in srgb, var(--hl) 15%, transparent)}
+  .todo-item-wrap.dragging{opacity:.45}
+  .todo-item-wrap.drop-before{box-shadow:0 -2px 0 0 var(--accent)}
+  .todo-item-wrap.drop-after{box-shadow:0 2px 0 0 var(--accent)}
+  .drag-handle{flex:none; width:20px; height:26px; display:grid; place-items:center; cursor:grab; color:var(--text-faint); border-radius:6px}
+  .drag-handle:hover{color:var(--text-muted); background:var(--surface-2)}
+  .drag-handle:active{cursor:grabbing}
+  .drag-handle svg{width:15px;height:15px}
+  .hl-btn{flex:none; width:26px; height:26px; border-radius:7px; cursor:pointer; border:1px solid var(--border-strong); background:var(--surface); display:grid; place-items:center}
+  .hl-btn:hover{border-color:var(--accent)}
+  .hl-btn:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+  .hl-btn .dot{width:13px; height:13px; border-radius:50%; border:2px solid var(--text-faint)}
+  .hl-btn.set .dot{border:none}
+  .hilite-row{display:none; gap:6px; padding:7px 6px 4px; flex-wrap:wrap}
+  .hilite-row.open{display:flex}
+  .hl-swatch{width:22px; height:22px; border-radius:6px; cursor:pointer; border:2px solid transparent}
+  .hl-swatch.none{background:var(--surface-2); border:1.5px solid var(--border-strong); display:grid; place-items:center; color:var(--text-faint)}
+  .hl-swatch.none svg{width:13px;height:13px}
+  .hl-swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--text-muted)}
+  .hl-swatch:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
   .todo-empty{font-size:.8rem;color:var(--text-faint);padding:4px 2px 8px;text-align:center}
   .todo-add{display:flex; align-items:center; gap:8px; margin-top:auto}
   .todo-add input{ flex:1; font:inherit; font-size:.86rem; color:var(--text); background:var(--surface-2); border:1px solid var(--border-strong); border-radius:9px; padding:8px 10px; }
@@ -498,6 +519,8 @@
       } else {
         col.items.forEach(function(it){ list.appendChild(makeTodoItem(col,it)); });
       }
+      list.addEventListener("dragover", function(e){ if(dragState.id) e.preventDefault(); });
+      list.addEventListener("drop", function(e){ if(!dragState.id) return; e.preventDefault(); moveItem(dragState, col, null, false); });
       wrap.appendChild(list);
 
       var add=document.createElement("div"); add.className="todo-add";
@@ -513,20 +536,85 @@
       todoBoard.appendChild(wrap);
     });
   }
+  var HILITES=["", "#FA5252", "#F59F00", "#FAB005", "#40C057", "#4C6EF5", "#845EF7"];
+  var dragState={id:null, from:null};
+  function idxOf(arr,id){ for(var i=0;i<arr.length;i++){ if(arr[i].id===id) return i; } return -1; }
+  function colById(id){ for(var i=0;i<todos.cols.length;i++){ if(todos.cols[i].id===id) return todos.cols[i]; } return null; }
+  function moveItem(ds,toCol,targetId,before){
+    if(!ds.id) return;
+    if(targetId===ds.id){ dragState.id=null; dragState.from=null; renderTodos(); return; }
+    var fromCol=colById(ds.from); if(!fromCol||!toCol){ dragState.id=null; dragState.from=null; return; }
+    var i=idxOf(fromCol.items, ds.id); if(i<0){ dragState.id=null; dragState.from=null; return; }
+    var moved=fromCol.items.splice(i,1)[0];
+    var tIdx;
+    if(targetId==null){ tIdx=toCol.items.length; }
+    else { tIdx=idxOf(toCol.items,targetId); if(tIdx<0) tIdx=toCol.items.length; else if(!before) tIdx+=1; }
+    toCol.items.splice(tIdx,0,moved);
+    dragState.id=null; dragState.from=null;
+    saveTodos(); renderTodos();
+  }
+
   function makeTodoItem(col,it){
+    var wrap=document.createElement("div"); wrap.className="todo-item-wrap"+(it.color?" hl":"");
+    if(it.color) wrap.style.setProperty("--hl", it.color);
+    wrap.setAttribute("draggable","true");
+
     var row=document.createElement("div"); row.className="todo-item"+(it.done?" done":"");
+
+    var handle=document.createElement("span"); handle.className="drag-handle"; handle.title="גרור לסידור לפי עדיפות"; handle.setAttribute("aria-hidden","true");
+    handle.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M9 6h.01M9 12h.01M9 18h.01M15 6h.01M15 12h.01M15 18h.01"></path></svg>';
+
     var chk=document.createElement("button"); chk.type="button"; chk.className="chk";
     chk.style.setProperty("--chkc",col.color);
     chk.setAttribute("aria-pressed",it.done?"true":"false"); chk.setAttribute("aria-label",it.done?"בטל בוצע":"סמן כבוצע");
     chk.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"></path></svg>';
     chk.addEventListener("click", function(){ it.done=!it.done; saveTodos(); renderTodos(); });
+
     var txt=document.createElement("input"); txt.className="titxt"; txt.value=it.text; txt.setAttribute("aria-label","טקסט המשימה");
     txt.addEventListener("input", function(){ it.text=txt.value; saveTodos(); });
+
+    var hlBtn=document.createElement("button"); hlBtn.type="button"; hlBtn.className="hl-btn"+(it.color?" set":""); hlBtn.title="צבע הדגשה"; hlBtn.setAttribute("aria-label","בחר צבע הדגשה");
+    var dot=document.createElement("span"); dot.className="dot"; if(it.color) dot.style.background=it.color; hlBtn.appendChild(dot);
+
     var del=document.createElement("button"); del.type="button"; del.className="row-del"; del.setAttribute("aria-label","מחק משימה");
     del.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>';
     del.addEventListener("click", function(){ col.items=col.items.filter(function(x){return x.id!==it.id;}); saveTodos(); renderTodos(); });
-    row.appendChild(chk); row.appendChild(txt); row.appendChild(del);
-    return row;
+
+    row.appendChild(handle); row.appendChild(chk); row.appendChild(txt); row.appendChild(hlBtn); row.appendChild(del);
+
+    var pal=document.createElement("div"); pal.className="hilite-row";
+    HILITES.forEach(function(c){
+      var sw=document.createElement("button"); sw.type="button"; sw.className="hl-swatch"+(c?"":" none"); if(c) sw.style.background=c;
+      sw.setAttribute("aria-pressed", (it.color||"")===c ? "true":"false");
+      sw.setAttribute("aria-label", c?("צבע "+c):"ללא צבע");
+      if(!c) sw.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l14 14"></path></svg>';
+      sw.addEventListener("click", function(){ it.color=c; saveTodos(); renderTodos(); });
+      pal.appendChild(sw);
+    });
+    hlBtn.addEventListener("click", function(){ pal.classList.toggle("open"); });
+
+    // drag & drop reorder
+    wrap.addEventListener("dragstart", function(e){
+      if(!(handle.contains(e.target) || e.target===row || e.target===wrap)){ e.preventDefault(); return; }
+      dragState.id=it.id; dragState.from=col.id; wrap.classList.add("dragging");
+      if(e.dataTransfer){ e.dataTransfer.effectAllowed="move"; try{ e.dataTransfer.setData("text/plain", it.id); }catch(_){} }
+    });
+    wrap.addEventListener("dragend", function(){ wrap.classList.remove("dragging","drop-before","drop-after"); });
+    wrap.addEventListener("dragover", function(e){
+      if(!dragState.id) return; e.preventDefault();
+      var r=wrap.getBoundingClientRect(); var before=(e.clientY < r.top + r.height/2);
+      wrap.classList.toggle("drop-before", before); wrap.classList.toggle("drop-after", !before);
+    });
+    wrap.addEventListener("dragleave", function(){ wrap.classList.remove("drop-before","drop-after"); });
+    wrap.addEventListener("drop", function(e){
+      if(!dragState.id) return; e.preventDefault(); e.stopPropagation();
+      var before=wrap.classList.contains("drop-before");
+      wrap.classList.remove("drop-before","drop-after");
+      moveItem(dragState, col, it.id, before);
+    });
+
+    wrap.appendChild(row); wrap.appendChild(pal);
+    return wrap;
   }
 
   /* ============ Calendar ============ */
