@@ -1,0 +1,805 @@
+﻿<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>לוח ספרינטים</title>
+<style>
+  :root{
+    --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#EFF1F5; --surface-3:#E9ECF1;
+    --border:#E2E5EB; --border-strong:#CDD2DC;
+    --text:#1A1D24; --text-muted:#6B7280; --text-faint:#A4ABB6;
+    --accent:#3B5BDB; --accent-ink:#2B45B0; --accent-weak:rgba(59,91,219,.10);
+    --today:#3B5BDB;
+    --red:#FA5252; --green:#2FB344;
+    --shadow:0 1px 2px rgba(20,24,35,.04), 0 8px 28px rgba(20,24,35,.08);
+    --shadow-pop:0 12px 40px rgba(20,24,35,.18);
+    --radius:14px; --radius-sm:9px;
+    --ff:"Segoe UI","Assistant","Arial Hebrew",Arial,system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0F1115; --surface:#171A21; --surface-2:#1E222B; --surface-3:#252A34;
+      --border:#2A2F3A; --border-strong:#39404E;
+      --text:#E8EAED; --text-muted:#9AA1AD; --text-faint:#616875;
+      --accent:#748FFC; --accent-ink:#93A6FD; --accent-weak:rgba(116,143,252,.15);
+      --today:#748FFC; --red:#FF6B6B; --green:#51CF66;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45);
+      --shadow-pop:0 16px 48px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#EFF1F5; --surface-3:#E9ECF1;
+    --border:#E2E5EB; --border-strong:#CDD2DC;
+    --text:#1A1D24; --text-muted:#6B7280; --text-faint:#A4ABB6;
+    --accent:#3B5BDB; --accent-ink:#2B45B0; --accent-weak:rgba(59,91,219,.10); --today:#3B5BDB;
+    --red:#FA5252; --green:#2FB344;
+    --shadow:0 1px 2px rgba(20,24,35,.04), 0 8px 28px rgba(20,24,35,.08);
+    --shadow-pop:0 12px 40px rgba(20,24,35,.18);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0F1115; --surface:#171A21; --surface-2:#1E222B; --surface-3:#252A34;
+    --border:#2A2F3A; --border-strong:#39404E;
+    --text:#E8EAED; --text-muted:#9AA1AD; --text-faint:#616875;
+    --accent:#748FFC; --accent-ink:#93A6FD; --accent-weak:rgba(116,143,252,.15); --today:#748FFC;
+    --red:#FF6B6B; --green:#51CF66;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45);
+    --shadow-pop:0 16px 48px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{ background:var(--bg); color:var(--text); font-family:var(--ff); -webkit-font-smoothing:antialiased; line-height:1.45; min-height:100vh; }
+  .wrap{max-width:1180px; margin:0 auto; padding:26px 22px 72px}
+
+  /* ---------- Header ---------- */
+  .top{display:flex; align-items:flex-end; justify-content:space-between; gap:18px; flex-wrap:wrap; margin-bottom:18px}
+  .brand{display:flex; align-items:center; gap:13px}
+  .mark{ width:42px; height:42px; border-radius:12px; flex:none; background:linear-gradient(150deg,var(--accent),var(--accent-ink)); display:grid; place-items:center; color:#fff; box-shadow:var(--shadow); }
+  .mark svg{width:22px;height:22px}
+  .brand h1{font-size:1.42rem; font-weight:800; margin:0; letter-spacing:-.01em}
+  .brand p{margin:2px 0 0; font-size:.82rem; color:var(--text-muted)}
+  .toolbtn{ appearance:none; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:10px; padding:9px 14px; font:inherit; font-size:.86rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background .15s, border-color .15s, transform .06s; }
+  .toolbtn:hover{background:var(--surface-2); border-color:var(--accent)}
+  .toolbtn:active{transform:translateY(1px)}
+  .toolbtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .toolbtn.icon{padding:9px; width:40px; justify-content:center}
+  .toolbtn svg{width:18px;height:18px}
+
+  /* ---------- TODO board ---------- */
+  .todo-board{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px}
+  .todo-col{ background:var(--surface); border:1px solid var(--border); border-top:3px solid var(--col); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 15px 12px; display:flex; flex-direction:column; }
+  .todo-col-head{display:flex; align-items:center; gap:9px; margin-bottom:11px}
+  .todo-col-head .dot{width:11px;height:11px;border-radius:50%;background:var(--col);flex:none}
+  .todo-title{ font:inherit; font-size:1rem; font-weight:800; color:var(--text); background:transparent; border:1px solid transparent; border-radius:8px; padding:3px 7px; flex:1; min-width:0; letter-spacing:.02em; }
+  .todo-title:hover{background:var(--surface-2)}
+  .todo-title:focus{outline:none; border-color:var(--col); background:var(--surface)}
+  .todo-count{font-size:.74rem; font-weight:800; color:var(--text-faint); font-variant-numeric:tabular-nums}
+  .todo-items{display:flex; flex-direction:column; gap:6px; margin-bottom:9px; min-height:8px}
+  .todo-item{display:flex; align-items:center; gap:8px}
+  .todo-item .chk{flex:none}
+  .todo-item .titxt{ flex:1; font:inherit; font-size:.88rem; color:var(--text); background:transparent; border:1px solid transparent; border-radius:7px; padding:6px 8px; transition:border-color .13s, background .13s; }
+  .todo-item .titxt:hover{background:var(--surface-2)}
+  .todo-item .titxt:focus{outline:none; border-color:var(--col); background:var(--surface)}
+  .todo-item.done .titxt{text-decoration:line-through; color:var(--text-faint)}
+  .todo-empty{font-size:.8rem;color:var(--text-faint);padding:4px 2px 8px;text-align:center}
+  .todo-add{display:flex; align-items:center; gap:8px; margin-top:auto}
+  .todo-add input{ flex:1; font:inherit; font-size:.86rem; color:var(--text); background:var(--surface-2); border:1px solid var(--border-strong); border-radius:9px; padding:8px 10px; }
+  .todo-add input:focus{outline:none; border-color:var(--col); background:var(--surface)}
+  .mini-add{ appearance:none; flex:none; width:34px;height:34px; border-radius:9px; cursor:pointer; border:1px solid var(--col); background:color-mix(in srgb,var(--col) 12%, transparent); color:var(--col); display:grid; place-items:center; transition:background .13s,color .13s}
+  .mini-add:hover{background:var(--col); color:#fff}
+  .mini-add:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .mini-add svg{width:17px;height:17px}
+
+  /* checkbox (shared) */
+  .chk{ appearance:none; flex:none; width:21px; height:21px; border-radius:6px; cursor:pointer; border:1.6px solid var(--border-strong); background:var(--surface-2); color:#fff; display:grid; place-items:center; transition:background .13s, border-color .13s; }
+  .chk svg{width:12px;height:12px; opacity:0; transition:opacity .13s}
+  .chk[aria-pressed="true"]{background:var(--chkc,var(--green)); border-color:var(--chkc,var(--green))}
+  .chk[aria-pressed="true"] svg{opacity:1}
+  .chk:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .row-del{ appearance:none; flex:none; width:30px; height:30px; border-radius:8px; cursor:pointer; border:none; background:transparent; color:var(--text-faint); display:grid; place-items:center; transition:all .13s; }
+  .row-del:hover{background:color-mix(in srgb,var(--red) 14%, transparent); color:var(--red)}
+  .row-del:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+  .row-del svg{width:16px;height:16px}
+
+  /* ---------- Month nav ---------- */
+  .navbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .nav-left{display:flex; align-items:center; gap:10px}
+  .month-title{font-size:1.28rem; font-weight:800; letter-spacing:-.01em; min-width:180px}
+  .month-title span{color:var(--text-muted); font-weight:600; font-size:.92rem; margin-inline-start:6px}
+  .navbtn{ appearance:none; width:38px; height:38px; border-radius:10px; cursor:pointer; border:1px solid var(--border-strong); background:var(--surface-2); color:var(--text); display:grid; place-items:center; transition:background .15s,border-color .15s,opacity .15s; }
+  .navbtn:hover:not(:disabled){background:var(--accent-weak); border-color:var(--accent)}
+  .navbtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .navbtn:disabled{opacity:.32; cursor:not-allowed}
+  .navbtn svg{width:18px;height:18px}
+  .range{font-size:.82rem; color:var(--text-muted); display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+  .range b{color:var(--text); font-weight:700; font-variant-numeric:tabular-nums}
+  .pill{ display:inline-flex; align-items:center; gap:6px; background:var(--accent-weak); color:var(--accent-ink); border-radius:999px; padding:4px 11px; font-weight:700; font-size:.78rem; }
+
+  /* ---------- Calendar ---------- */
+  .cal{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+  .weekhead{display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--border)}
+  .weekhead div{ padding:11px 8px; text-align:center; font-size:.75rem; font-weight:700; letter-spacing:.04em; color:var(--text-muted); text-transform:uppercase; }
+  .weekhead div.we{color:var(--text-faint)}
+  .grid{display:grid; grid-template-columns:repeat(7,1fr)}
+  .cell{ position:relative; min-height:122px; border-inline-start:1px solid var(--border); border-bottom:1px solid var(--border); padding:8px 8px 32px; cursor:pointer; transition:background .12s; display:flex; flex-direction:column; gap:5px; }
+  .grid .cell:nth-child(7n+1){border-inline-start:none}
+  .cell:hover{background:var(--surface-2)}
+  .cell.out{background:transparent; cursor:default; opacity:.5}
+  .cell.out:hover{background:transparent}
+  .cell:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+  .daynum{ font-size:.9rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text); width:28px; height:28px; display:grid; place-items:center; border-radius:8px; align-self:flex-start; }
+  .cell.out .daynum{color:var(--text-faint); font-weight:600}
+  .cell.we .daynum{color:var(--text-muted)}
+  .cell.today .daynum{background:var(--today); color:#fff}
+
+  .evlist{display:flex; flex-direction:column; gap:4px; overflow:hidden}
+  .ev{ display:flex; align-items:center; gap:6px; text-align:start; width:100%; border:none; background:color-mix(in srgb,var(--c) 13%, transparent); color:var(--c); cursor:pointer; border-radius:7px; padding:4px 7px; font:inherit; font-size:.77rem; font-weight:800; border-inline-start:3px solid var(--c); line-height:1.25; transition:filter .12s, transform .06s; }
+  .ev:hover{filter:brightness(.97)}
+  .ev:active{transform:translateY(1px)}
+  .ev:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+  .ev .eic{flex:none; width:14px; height:14px; display:grid; place-items:center}
+  .ev .eic svg{width:14px;height:14px}
+  .ev .etx{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
+  .ev .badge{ flex:none; font-size:.67rem; font-weight:800; font-variant-numeric:tabular-nums; background:color-mix(in srgb,var(--c) 24%, transparent); border-radius:999px; padding:1px 6px; line-height:1.5; }
+  .ev.alldone .badge{background:color-mix(in srgb,var(--green) 26%, transparent); color:var(--green)}
+  .more{font-size:.72rem; color:var(--text-muted); font-weight:700; padding-inline-start:2px}
+  .addbtn{ position:absolute; inset-block-end:7px; inset-inline-start:7px; height:24px; border-radius:7px; border:1px dashed var(--border-strong); background:var(--surface); color:var(--text-muted); cursor:pointer; display:inline-flex; align-items:center; gap:4px; padding:0 8px; font:inherit; font-size:.72rem; font-weight:700; opacity:0; transition:opacity .12s, background .12s, color .12s; }
+  .cell:hover .addbtn{opacity:1}
+  .addbtn:hover{background:var(--accent); color:#fff; border-color:var(--accent); border-style:solid}
+  .addbtn:focus-visible{opacity:1; outline:2px solid var(--accent); outline-offset:1px}
+  .addbtn svg{width:12px;height:12px}
+
+  /* ---------- Legend ---------- */
+  .legend{display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:16px; padding:0 2px; align-items:center}
+  .legend .lbl{font-size:.78rem; color:var(--text-faint); font-weight:700; margin-inline-end:4px}
+  .legend .item{display:inline-flex; align-items:center; gap:7px; font-size:.8rem; color:var(--text-muted); font-weight:600}
+  .legend .item .swatch{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 15%, transparent)}
+  .legend .item .swatch svg{width:13px;height:13px}
+
+  /* ---------- Modal ---------- */
+  .overlay{ position:fixed; inset:0; background:rgba(15,17,21,.5); backdrop-filter:blur(3px); display:grid; place-items:center; padding:20px; z-index:50; opacity:0; pointer-events:none; transition:opacity .18s; }
+  .overlay.open{opacity:1; pointer-events:auto}
+  .modal{ width:min(500px,100%); background:var(--surface); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-pop); padding:22px; transform:translateY(8px) scale(.98); transition:transform .18s; max-height:90vh; overflow:auto; border-top:4px solid var(--evc,var(--accent)); }
+  .overlay.open .modal{transform:none}
+  .modal-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:16px}
+  .modal-head h2{margin:0; font-size:1.12rem; font-weight:800}
+  .modal-head .date{margin:3px 0 0; font-size:.82rem; color:var(--text-muted); font-variant-numeric:tabular-nums}
+  .x{appearance:none;border:none;background:var(--surface-2);color:var(--text-muted);width:32px;height:32px;border-radius:9px;cursor:pointer;display:grid;place-items:center}
+  .x:hover{background:var(--surface-3);color:var(--text)}
+  .x:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .field{margin-bottom:16px}
+  .field label{display:block; font-size:.78rem; font-weight:700; color:var(--text-muted); margin-bottom:8px; letter-spacing:.01em}
+  .input{ width:100%; font:inherit; color:var(--text); background:var(--surface-2); border:1px solid var(--border-strong); border-radius:10px; padding:10px 12px; transition:border-color .15s, background .15s; }
+  .input:focus{outline:none; border-color:var(--accent); background:var(--surface)}
+
+  /* type selector */
+  .types{display:flex; flex-wrap:wrap; gap:8px}
+  .type-opt{ appearance:none; cursor:pointer; border:1.5px solid var(--border-strong); background:var(--surface-2); border-radius:999px; padding:6px 12px 6px 10px; font:inherit; font-size:.8rem; font-weight:700; color:var(--text-muted); display:inline-flex; align-items:center; gap:6px; transition:all .13s; }
+  .type-opt .ti{width:15px;height:15px;display:grid;place-items:center;color:var(--tc)}
+  .type-opt .ti svg{width:15px;height:15px}
+  .type-opt:hover{border-color:var(--tc)}
+  .type-opt[aria-pressed="true"]{color:var(--tc); border-color:var(--tc); background:color-mix(in srgb,var(--tc) 12%, transparent)}
+  .type-opt:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .type-add{ appearance:none; cursor:pointer; border:1.5px dashed var(--border-strong); background:transparent; border-radius:999px; padding:6px 12px; font:inherit; font-size:.8rem; font-weight:700; color:var(--text-muted); display:inline-flex; align-items:center; gap:5px; }
+  .type-add:hover{border-color:var(--accent); color:var(--accent)}
+  .type-add:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .type-add svg{width:14px;height:14px}
+
+  /* new-type panel */
+  .newtype{ margin-top:11px; border:1px solid var(--border); border-radius:12px; padding:13px; background:var(--surface-2); display:none; }
+  .newtype.open{display:block}
+  .newtype .nt-row{display:flex; align-items:center; gap:8px; margin-bottom:10px}
+  .newtype .nt-row:last-child{margin-bottom:0}
+  .swatches,.iconset{display:flex; flex-wrap:wrap; gap:6px}
+  .sw{ width:24px;height:24px;border-radius:7px;cursor:pointer;border:2px solid transparent; }
+  .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--text-faint)}
+  .sw:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .ic{ width:30px;height:30px;border-radius:8px;cursor:pointer;border:1.5px solid var(--border-strong); background:var(--surface); color:var(--text-muted); display:grid;place-items:center; }
+  .ic[aria-pressed="true"]{border-color:var(--accent); color:var(--accent); background:var(--accent-weak)}
+  .ic:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .ic svg{width:17px;height:17px}
+  .nt-actions{display:flex; gap:8px; margin-top:4px}
+
+  /* tasks */
+  .tasks-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:9px}
+  .tasks-head label{margin:0}
+  .progress{display:flex; align-items:center; gap:8px}
+  .progress .ptxt{font-size:.75rem; font-weight:800; color:var(--text-muted); font-variant-numeric:tabular-nums}
+  .pbar{width:74px; height:6px; border-radius:999px; background:var(--surface-3); overflow:hidden}
+  .pbar i{display:block; height:100%; background:var(--green); width:0; transition:width .2s}
+  .tasklist{display:flex; flex-direction:column; gap:9px; margin-bottom:10px}
+  .task{display:flex; align-items:flex-start; gap:9px}
+  .task .chk{margin-top:5px}
+  .task-main{flex:1; display:flex; flex-direction:column; gap:4px}
+  .task-ta{ width:100%; font:inherit; font-size:.9rem; color:var(--text); background:var(--surface-2); border:1px solid var(--border-strong); border-radius:9px; padding:8px 10px; resize:none; overflow:hidden; line-height:1.5; min-height:38px; white-space:pre-wrap; }
+  .task-ta:focus{outline:none; border-color:var(--accent); background:var(--surface)}
+  .task.done .task-ta{text-decoration:line-through; color:var(--text-faint)}
+  .task-tools{display:flex; align-items:center; gap:2px}
+  .bullet-btn{ appearance:none; border:none; background:transparent; color:var(--text-faint); cursor:pointer; font:inherit; font-size:.74rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; padding:3px 7px; border-radius:6px; }
+  .bullet-btn:hover{background:var(--surface-3); color:var(--text)}
+  .bullet-btn:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+  .task-empty{font-size:.82rem; color:var(--text-faint); padding:6px 2px 8px; text-align:center}
+  .task-add{display:flex; align-items:center; gap:9px; margin-top:2px}
+  .task-add .input{flex:1}
+  .add-task-btn{ appearance:none; flex:none; width:40px; height:40px; border-radius:10px; cursor:pointer; border:1px solid var(--accent); background:var(--accent-weak); color:var(--accent-ink); display:grid; place-items:center; transition:background .13s}
+  .add-task-btn:hover{background:var(--accent); color:#fff}
+  .add-task-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .add-task-btn svg{width:18px;height:18px}
+
+  .modal-foot{display:flex; align-items:center; gap:10px; margin-top:20px; border-top:1px solid var(--border); padding-top:16px}
+  .btn{appearance:none; border:none; font:inherit; font-weight:700; font-size:.88rem; border-radius:10px; padding:11px 18px; cursor:pointer; transition:filter .13s, transform .06s, background .13s}
+  .btn:active{transform:translateY(1px)}
+  .btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .btn-primary{background:var(--accent); color:#fff; flex:1}
+  .btn-primary:hover{filter:brightness(1.06)}
+  .btn-ghost{background:var(--surface-2); color:var(--text)}
+  .btn-ghost:hover{background:var(--surface-3)}
+  .btn-danger{background:transparent; color:var(--red); margin-inline-end:auto; padding:11px 12px; display:inline-flex; align-items:center; gap:6px}
+  .btn-danger:hover{background:color-mix(in srgb,var(--red) 12%, transparent)}
+  .btn-danger svg{width:15px;height:15px}
+  .btn-sm{padding:8px 14px; font-size:.82rem}
+
+  .toast{ position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(16px); background:var(--text); color:var(--bg); padding:11px 18px; border-radius:11px; font-weight:700; font-size:.86rem; box-shadow:var(--shadow-pop); opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:80; }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:720px){
+    .todo-board{grid-template-columns:1fr}
+  }
+  @media (max-width:640px){
+    .wrap{padding:18px 12px 60px}
+    .cell{min-height:94px; padding:6px 5px 28px}
+    .month-title{min-width:auto; font-size:1.1rem}
+    .weekhead div{font-size:.68rem; padding:9px 2px}
+    .ev{font-size:.72rem; padding:3px 6px}
+    .range{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 9h18M8 2v4M16 2v4"></path><path d="M8 14l2.5 2.5L16 12"></path>
+        </svg>
+      </div>
+      <div>
+        <h1>לוח ספרינטים</h1>
+        <p>משימות אישיות, גרסאות ואירועים · יולי 2026 – יוני 2027</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="toolbtn" id="todayBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        היום
+      </button>
+      <button class="toolbtn" id="exportBtn" type="button" title="הורדת קובץ גיבוי של כל הנתונים">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M8 10l4 4 4-4M5 21h14"></path></svg>
+        גיבוי
+      </button>
+      <button class="toolbtn" id="importBtn" type="button" title="שחזור נתונים מקובץ גיבוי">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14V3M8 7l4-4 4 4M5 21h14"></path></svg>
+        שחזור
+      </button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      <button class="toolbtn icon" id="themeBtn" type="button" title="החלף ערכת נושא" aria-label="החלף ערכת נושא">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- TODO board -->
+  <div class="todo-board" id="todoBoard"></div>
+
+  <!-- Month nav -->
+  <div class="navbar">
+    <div class="nav-left">
+      <button class="navbtn" id="prevBtn" type="button" aria-label="חודש קודם">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+      </button>
+      <div class="month-title" id="monthTitle">—</div>
+      <button class="navbtn" id="nextBtn" type="button" aria-label="חודש הבא">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>
+      </button>
+    </div>
+    <div class="range">
+      <span class="pill" id="monthCount">0 אירועים החודש</span>
+      <span>סה״כ אירועים: <b id="totalCount">0</b></span>
+      <span>משימות פתוחות: <b id="openTasks">0</b></span>
+    </div>
+  </div>
+
+  <div class="cal">
+    <div class="weekhead" id="weekhead"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+</div>
+
+<!-- Event + tasks modal -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="modal" id="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="mTitle">אירוע חדש</h2>
+        <p class="date" id="mDate"></p>
+      </div>
+      <button class="x" id="closeBtn" type="button" aria-label="סגור">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+
+    <div class="field">
+      <label>סוג האירוע</label>
+      <div class="types" id="fTypes"></div>
+      <div class="newtype" id="newType">
+        <div class="nt-row"><input class="input" id="ntName" type="text" placeholder="שם הסוג (למשל: השקה)" maxlength="24" autocomplete="off"></div>
+        <div class="nt-row"><span style="font-size:.75rem;font-weight:700;color:var(--text-muted);min-width:38px">צבע</span><div class="swatches" id="ntColors"></div></div>
+        <div class="nt-row"><span style="font-size:.75rem;font-weight:700;color:var(--text-muted);min-width:38px">אייקון</span><div class="iconset" id="ntIcons"></div></div>
+        <div class="nt-actions">
+          <button class="btn btn-primary btn-sm" id="ntSave" type="button" style="flex:none">הוסף סוג</button>
+          <button class="btn btn-ghost btn-sm" id="ntCancel" type="button">ביטול</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="fTitle">כותרת האירוע</label>
+      <input class="input" id="fTitle" type="text" placeholder="לדוגמה: גרסה 4.2.0 / סקירת ספרינט" maxlength="70" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <div class="tasks-head">
+        <label>משימות</label>
+        <div class="progress"><span class="ptxt" id="ptxt">0/0</span><span class="pbar"><i id="pbar"></i></span></div>
+      </div>
+      <div class="tasklist" id="tasklist"></div>
+      <div class="task-add">
+        <input class="input" id="newTask" type="text" placeholder="הוסף משימה…" autocomplete="off">
+        <button class="add-task-btn" id="addTaskBtn" type="button" aria-label="הוסף משימה">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="deleteBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>
+        מחיקת האירוע
+      </button>
+      <button class="btn btn-primary" id="doneBtn" type="button">סיום</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  var K_EVENTS="sprint-events-v3", K_TYPES="sprint-types-v1", K_TODOS="sprint-todos-v1", K_THEME="sprint-calendar-theme";
+
+  var MONTHS=["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
+  var DAYS_FULL=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+  var DAYS_SHORT=["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"];
+
+  var ICONS={
+    tag:'<path d="M20.6 13.4L12 22l-9-9V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"></path><circle cx="7.5" cy="7.5" r="1.3"></circle>',
+    flag:'<path d="M5 22V4M5 4h13l-2.2 4L18 12H5"></path>',
+    users:'<circle cx="9" cy="8" r="3.1"></circle><path d="M3.2 20a5.8 5.8 0 0 1 11.6 0M16 5.4a3 3 0 0 1 0 5.9M20.8 20a5.4 5.4 0 0 0-3.8-5.2"></path>',
+    check:'<circle cx="12" cy="12" r="9"></circle><path d="M8 12l2.5 2.5L16 9"></path>',
+    star:'<path d="M12 3l2.7 5.5 6 .9-4.35 4.2 1.03 6L12 16.8 6.6 19.6l1.03-6L3.3 9.4l6-.9z"></path>',
+    bug:'<path d="M9 8a3 3 0 0 1 6 0M5.5 12H4M20 12h-1.5M12 8v11M5 9l2 2M19 9l-2 2M6 16a6 6 0 0 0 12 0"></path>',
+    rocket:'<path d="M5.5 15c-1.2 1-1.7 4.2-1.7 4.2s3.2-.5 4.2-1.7M13.5 4c3.2 0 6.5 3.3 6.5 6.5L13 17.5 6.5 11 13.5 4z"></path><circle cx="14.4" cy="9.6" r="1.5"></circle>',
+    bell:'<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6M10 20a2 2 0 0 0 4 0"></path>',
+    calendar:'<rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 9h18M8 2v4M16 2v4"></path>',
+    bolt:'<path d="M13 2L4 14h6l-1 8 9-12h-6z"></path>',
+    target:'<circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1.4"></circle>',
+    code:'<path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"></path>'
+  };
+  var ICON_CHOICES=["tag","flag","users","check","star","bug","rocket","bell","calendar","bolt","target","code"];
+  var PALETTE=["#4C6EF5","#FA5252","#845EF7","#12B886","#F59F00","#E64980","#15AABF","#7048E8","#82C91E","#FD7E14"];
+
+  var BUILTIN_TYPES=[
+    {id:"version",  label:"גרסה",   color:"#4C6EF5", icon:"tag"},
+    {id:"deadline", label:"דדליין", color:"#FA5252", icon:"flag"},
+    {id:"meeting",  label:"פגישה",  color:"#845EF7", icon:"users"},
+    {id:"task",     label:"משימה",  color:"#12B886", icon:"check"}
+  ];
+
+  function iconSvg(name){
+    var inner = ICONS[name] || ICONS.tag;
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+inner+'</svg>';
+  }
+
+  var START={y:2026,m:6}, RANGE=12, current=0;
+
+  function loadJSON(k,d){ try{ return JSON.parse(localStorage.getItem(k)) || d; }catch(e){ return d; } }
+  function saveJSON(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+  var events = loadJSON(K_EVENTS, {});
+  var customTypes = loadJSON(K_TYPES, []);
+  var todos = loadJSON(K_TODOS, {
+    cols:[
+      {id:"me",  label:"TODO ME",  color:"#FA5252", items:[]},
+      {id:"uri", label:"TODO URI", color:"#2FB344", items:[]}
+    ]
+  });
+
+  function saveEvents(){ saveJSON(K_EVENTS, events); }
+  function saveTypes(){ saveJSON(K_TYPES, customTypes); }
+  function saveTodos(){ saveJSON(K_TODOS, todos); }
+
+  function allTypes(){ return BUILTIN_TYPES.concat(customTypes); }
+  function typeById(id){ var a=allTypes(); for(var i=0;i<a.length;i++){ if(a[i].id===id) return a[i]; } return BUILTIN_TYPES[0]; }
+
+  function ymOf(idx){ var t=START.m+idx; return {y:START.y+Math.floor(t/12), m:((t%12)+12)%12}; }
+  function key(y,m,d){ return y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0"); }
+  function todayKey(){ var n=new Date(); return key(n.getFullYear(),n.getMonth(),n.getDate()); }
+  function taskStats(ev){ var t=ev.tasks?ev.tasks.length:0, d=ev.tasks?ev.tasks.filter(function(x){return x.done;}).length:0; return {total:t,done:d}; }
+
+  /* ============ TODO board ============ */
+  var todoBoard=document.getElementById("todoBoard");
+  function renderTodos(){
+    todoBoard.innerHTML="";
+    todos.cols.forEach(function(col){
+      var wrap=document.createElement("div"); wrap.className="todo-col"; wrap.style.setProperty("--col",col.color);
+      var open = col.items.filter(function(i){return !i.done;}).length;
+
+      var head=document.createElement("div"); head.className="todo-col-head";
+      var dot=document.createElement("span"); dot.className="dot"; head.appendChild(dot);
+      var title=document.createElement("input"); title.className="todo-title"; title.value=col.label;
+      title.setAttribute("aria-label","שם העמודה");
+      title.addEventListener("input", function(){ col.label=title.value; saveTodos(); });
+      head.appendChild(title);
+      var cnt=document.createElement("span"); cnt.className="todo-count"; cnt.textContent=open+" פתוחות"; head.appendChild(cnt);
+      wrap.appendChild(head);
+
+      var list=document.createElement("div"); list.className="todo-items";
+      if(!col.items.length){
+        var em=document.createElement("div"); em.className="todo-empty"; em.textContent="אין משימות — הוסיפו למטה."; list.appendChild(em);
+      } else {
+        col.items.forEach(function(it){ list.appendChild(makeTodoItem(col,it)); });
+      }
+      wrap.appendChild(list);
+
+      var add=document.createElement("div"); add.className="todo-add";
+      var inp=document.createElement("input"); inp.type="text"; inp.placeholder="הוסף משימה…";
+      inp.setAttribute("aria-label","משימה חדשה ל"+col.label);
+      var btn=document.createElement("button"); btn.className="mini-add"; btn.type="button"; btn.setAttribute("aria-label","הוסף");
+      btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>';
+      function addItem(){ var v=inp.value.trim(); if(!v) return; col.items.push({id:uid(),text:v,done:false}); saveTodos(); renderTodos(); }
+      btn.addEventListener("click", addItem);
+      inp.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); addItem(); } });
+      add.appendChild(inp); add.appendChild(btn); wrap.appendChild(add);
+
+      todoBoard.appendChild(wrap);
+    });
+  }
+  function makeTodoItem(col,it){
+    var row=document.createElement("div"); row.className="todo-item"+(it.done?" done":"");
+    var chk=document.createElement("button"); chk.type="button"; chk.className="chk";
+    chk.style.setProperty("--chkc",col.color);
+    chk.setAttribute("aria-pressed",it.done?"true":"false"); chk.setAttribute("aria-label",it.done?"בטל בוצע":"סמן כבוצע");
+    chk.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"></path></svg>';
+    chk.addEventListener("click", function(){ it.done=!it.done; saveTodos(); renderTodos(); });
+    var txt=document.createElement("input"); txt.className="titxt"; txt.value=it.text; txt.setAttribute("aria-label","טקסט המשימה");
+    txt.addEventListener("input", function(){ it.text=txt.value; saveTodos(); });
+    var del=document.createElement("button"); del.type="button"; del.className="row-del"; del.setAttribute("aria-label","מחק משימה");
+    del.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>';
+    del.addEventListener("click", function(){ col.items=col.items.filter(function(x){return x.id!==it.id;}); saveTodos(); renderTodos(); });
+    row.appendChild(chk); row.appendChild(txt); row.appendChild(del);
+    return row;
+  }
+
+  /* ============ Calendar ============ */
+  var grid=document.getElementById("grid"), weekhead=document.getElementById("weekhead");
+  (function(){ var f=document.createDocumentFragment();
+    for(var i=0;i<7;i++){ var d=document.createElement("div"); d.textContent=window.innerWidth<640?DAYS_SHORT[i]:DAYS_FULL[i]; if(i===5||i===6)d.className="we"; f.appendChild(d);} weekhead.appendChild(f);
+  })();
+
+  function render(){
+    var ym=ymOf(current), y=ym.y, m=ym.m;
+    document.getElementById("monthTitle").innerHTML=MONTHS[m]+' <span>'+y+'</span>';
+    var firstDow=new Date(y,m,1).getDay(), dim=new Date(y,m+1,0).getDate(), prev=new Date(y,m,0).getDate();
+    var tk=todayKey();
+    var cells=[];
+    for(var i=0;i<firstDow;i++) cells.push({d:prev-firstDow+1+i,out:true,dow:i});
+    for(var day=1;day<=dim;day++) cells.push({d:day,out:false,dow:(firstDow+day-1)%7,y:y,m:m});
+    while(cells.length%7!==0) cells.push({d:cells.length-(firstDow+dim)+1,out:true,dow:cells.length%7});
+
+    grid.innerHTML=""; var frag=document.createDocumentFragment();
+    cells.forEach(function(c){
+      var el=document.createElement("div");
+      el.className="cell"+(c.out?" out":"")+((c.dow===5||c.dow===6)?" we":"");
+      if(!c.out){
+        var k=key(c.y,c.m,c.d);
+        if(k===tk) el.className+=" today";
+        el.dataset.date=k; el.tabIndex=0; el.setAttribute("role","button"); el.setAttribute("aria-label",c.d+" ב"+MONTHS[c.m]);
+        var num=document.createElement("div"); num.className="daynum"; num.textContent=c.d; el.appendChild(num);
+        var list=document.createElement("div"); list.className="evlist";
+        var evs=events[k]||[];
+        evs.slice(0,3).forEach(function(ev){ list.appendChild(makeEventEl(k,ev)); });
+        if(evs.length>3){ var mo=document.createElement("div"); mo.className="more"; mo.textContent="+"+(evs.length-3)+" נוספים"; list.appendChild(mo); }
+        el.appendChild(list);
+        var add=document.createElement("button"); add.className="addbtn"; add.type="button"; add.setAttribute("aria-label","הוספת אירוע ל-"+c.d+" ב"+MONTHS[c.m]);
+        add.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>אירוע';
+        add.addEventListener("click", function(e){ e.stopPropagation(); openEvent(k,null); });
+        el.appendChild(add);
+        el.addEventListener("click", function(){ openEvent(k,null); });
+        el.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openEvent(k,null);} });
+      }
+      frag.appendChild(el);
+    });
+    grid.appendChild(frag);
+    document.getElementById("prevBtn").disabled=(current===0);
+    document.getElementById("nextBtn").disabled=(current===RANGE-1);
+    updateCounts();
+  }
+
+  function makeEventEl(k,ev){
+    var t=typeById(ev.type), st=taskStats(ev), allDone=st.total>0&&st.done===st.total;
+    var b=document.createElement("button"); b.type="button"; b.className="ev"+(allDone?" alldone":"");
+    b.style.setProperty("--c",t.color);
+    b.title=(ev.title||"ללא כותרת")+" · "+t.label+(st.total?(" · "+st.done+"/"+st.total+" משימות"):"");
+    var ic=document.createElement("span"); ic.className="eic"; ic.innerHTML=iconSvg(t.icon); b.appendChild(ic);
+    var tx=document.createElement("span"); tx.className="etx"; tx.textContent=ev.title||"ללא כותרת"; b.appendChild(tx);
+    if(st.total>0){ var bd=document.createElement("span"); bd.className="badge"; bd.textContent=st.done+"/"+st.total; b.appendChild(bd); }
+    b.addEventListener("click", function(e){ e.stopPropagation(); openEvent(k,ev.id); });
+    return b;
+  }
+
+  function updateCounts(){
+    var ym=ymOf(current), prefix=ym.y+"-"+String(ym.m+1).padStart(2,"0");
+    var monthN=0,total=0,openT=0;
+    for(var dk in events){ if(!events.hasOwnProperty(dk))continue; var arr=events[dk];
+      total+=arr.length; if(dk.indexOf(prefix+"-")===0) monthN+=arr.length;
+      arr.forEach(function(ev){ if(ev.tasks) openT+=ev.tasks.filter(function(t){return !t.done;}).length; });
+    }
+    var mc=document.getElementById("monthCount");
+    mc.textContent = monthN===1 ? "אירוע אחד החודש" : monthN+" אירועים החודש";
+    document.getElementById("totalCount").textContent=total;
+    document.getElementById("openTasks").textContent=openT;
+  }
+
+  /* ============ Event modal ============ */
+  var overlay=document.getElementById("overlay"), modal=document.getElementById("modal");
+  var fTitle=document.getElementById("fTitle"), fTypes=document.getElementById("fTypes");
+  var tasklist=document.getElementById("tasklist"), newTask=document.getElementById("newTask");
+  var lastFocus=null, cur={key:null, ev:null, isNew:false};
+
+  function selectType(id){
+    if(cur.ev){ cur.ev.type=id; saveEvents(); }
+    var t=typeById(id);
+    modal.style.setProperty("--evc",t.color);
+    Array.prototype.forEach.call(fTypes.querySelectorAll(".type-opt"), function(c){ c.setAttribute("aria-pressed", c.dataset.type===id?"true":"false"); });
+  }
+
+  function renderTypeOptions(){
+    fTypes.innerHTML="";
+    allTypes().forEach(function(t){
+      var btn=document.createElement("button"); btn.type="button"; btn.className="type-opt"; btn.dataset.type=t.id;
+      btn.style.setProperty("--tc",t.color); btn.setAttribute("aria-pressed","false");
+      btn.innerHTML='<span class="ti">'+iconSvg(t.icon)+'</span>'+t.label;
+      btn.addEventListener("click", function(){ selectType(t.id); });
+      fTypes.appendChild(btn);
+    });
+    var addb=document.createElement("button"); addb.type="button"; addb.className="type-add";
+    addb.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>סוג חדש';
+    addb.addEventListener("click", openNewType);
+    fTypes.appendChild(addb);
+  }
+
+  function fmtDateHe(k){ var p=k.split("-"); return parseInt(p[2],10)+" ב"+MONTHS[parseInt(p[1],10)-1]+" "+p[0]; }
+
+  function openEvent(k,id){
+    lastFocus=document.activeElement;
+    if(!events[k]) events[k]=[];
+    var ev;
+    if(id){ ev=events[k].filter(function(x){return x.id===id;})[0]; cur.isNew=false; document.getElementById("mTitle").textContent="עריכת אירוע"; }
+    else { ev={id:uid(), type:BUILTIN_TYPES[0].id, title:"", tasks:[]}; events[k].push(ev); cur.isNew=true; document.getElementById("mTitle").textContent="אירוע חדש"; }
+    cur.key=k; cur.ev=ev;
+    document.getElementById("mDate").textContent=fmtDateHe(k);
+    renderTypeOptions(); selectType(ev.type||BUILTIN_TYPES[0].id);
+    closeNewType();
+    fTitle.value=ev.title||""; newTask.value="";
+    renderTasks();
+    overlay.classList.add("open");
+    setTimeout(function(){ (cur.isNew?fTitle:newTask).focus(); },60);
+  }
+
+  function renderTasks(){
+    var ev=cur.ev; tasklist.innerHTML="";
+    if(!ev.tasks.length){ var em=document.createElement("div"); em.className="task-empty"; em.textContent="אין עדיין משימות — הוסיפו למטה."; tasklist.appendChild(em); }
+    else ev.tasks.forEach(function(t){ tasklist.appendChild(makeTaskEl(t)); });
+    updateProgress();
+  }
+  function updateProgress(){
+    var st=taskStats(cur.ev);
+    document.getElementById("ptxt").textContent=st.done+"/"+st.total;
+    document.getElementById("pbar").style.width=st.total?(st.done/st.total*100)+"%":"0%";
+  }
+  function autoGrow(ta){ ta.style.height="auto"; ta.style.height=(ta.scrollHeight)+"px"; }
+
+  function makeTaskEl(task){
+    var row=document.createElement("div"); row.className="task"+(task.done?" done":"");
+    var chk=document.createElement("button"); chk.type="button"; chk.className="chk";
+    chk.setAttribute("aria-pressed",task.done?"true":"false"); chk.setAttribute("aria-label",task.done?"בטל בוצע":"סמן כבוצע");
+    chk.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"></path></svg>';
+    chk.addEventListener("click", function(){
+      task.done=!task.done; saveEvents(); row.classList.toggle("done",task.done);
+      chk.setAttribute("aria-pressed",task.done?"true":"false");
+      updateProgress();
+    });
+
+    var main=document.createElement("div"); main.className="task-main";
+    var ta=document.createElement("textarea"); ta.className="task-ta"; ta.rows=1; ta.value=task.text||"";
+    ta.setAttribute("aria-label","טקסט המשימה");
+    ta.addEventListener("input", function(){ task.text=ta.value; saveEvents(); autoGrow(ta); });
+
+    var tools=document.createElement("div"); tools.className="task-tools";
+    var bul=document.createElement("button"); bul.type="button"; bul.className="bullet-btn"; bul.title="הוסף בולט בשורה";
+    bul.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="6" cy="12" r="1.6"></circle><path d="M11 12h8"></path></svg>בולט';
+    bul.addEventListener("click", function(){ toggleBullet(ta, task); });
+    tools.appendChild(bul);
+    main.appendChild(ta); main.appendChild(tools);
+
+    var del=document.createElement("button"); del.type="button"; del.className="row-del"; del.setAttribute("aria-label","מחק משימה");
+    del.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>';
+    del.addEventListener("click", function(){ cur.ev.tasks=cur.ev.tasks.filter(function(x){return x.id!==task.id;}); saveEvents(); renderTasks(); });
+
+    row.appendChild(chk); row.appendChild(main); row.appendChild(del);
+    setTimeout(function(){ autoGrow(ta); },0);
+    return row;
+  }
+
+  function toggleBullet(ta, task){
+    var val=ta.value, pos=ta.selectionStart!=null?ta.selectionStart:val.length;
+    var ls=val.lastIndexOf("\n",pos-1)+1;
+    var before=val.slice(0,ls), line=val.slice(ls);
+    var nlIdx=line.indexOf("\n"); if(nlIdx===-1)nlIdx=line.length;
+    var rest=line.slice(nlIdx), lineText=line.slice(0,nlIdx);
+    if(lineText.indexOf("• ")===0){ lineText=lineText.slice(2); }
+    else { lineText="• "+lineText; }
+    ta.value=before+lineText+rest;
+    task.text=ta.value; saveEvents(); autoGrow(ta); ta.focus();
+    var np=before.length+lineText.length; ta.setSelectionRange(np,np);
+  }
+
+  function addTask(){
+    var text=newTask.value.trim(); if(!text){ newTask.focus(); return; }
+    cur.ev.tasks.push({id:uid(),text:text,done:false});
+    saveEvents(); newTask.value=""; renderTasks(); newTask.focus();
+  }
+
+  function cleanupIfEmpty(){
+    var ev=cur.ev; if(!ev) return;
+    var noTitle=!(ev.title||"").trim(), noTasks=!ev.tasks||ev.tasks.length===0 || ev.tasks.every(function(t){return !(t.text||"").trim();});
+    if(noTitle && noTasks){ events[cur.key]=(events[cur.key]||[]).filter(function(x){return x.id!==ev.id;}); }
+    else if(noTitle){ ev.title="ללא כותרת"; }
+    if(events[cur.key] && events[cur.key].length===0) delete events[cur.key];
+    saveEvents();
+  }
+  function closeEditor(){ cleanupIfEmpty(); overlay.classList.remove("open"); render(); if(lastFocus&&lastFocus.focus)lastFocus.focus(); cur.key=null; cur.ev=null; }
+  function deleteEvent(){ events[cur.key]=(events[cur.key]||[]).filter(function(x){return x.id!==cur.ev.id;}); if(events[cur.key]&&events[cur.key].length===0)delete events[cur.key]; saveEvents(); overlay.classList.remove("open"); render(); if(lastFocus&&lastFocus.focus)lastFocus.focus(); cur.key=null; cur.ev=null; }
+
+  /* ---- new type panel ---- */
+  var newTypePanel=document.getElementById("newType");
+  var ntName=document.getElementById("ntName"), ntColors=document.getElementById("ntColors"), ntIcons=document.getElementById("ntIcons");
+  var ntState={color:PALETTE[0], icon:ICON_CHOICES[0]};
+  (function buildNT(){
+    PALETTE.forEach(function(col){
+      var b=document.createElement("button"); b.type="button"; b.className="sw"; b.style.background=col;
+      b.setAttribute("aria-label","צבע "+col); b.setAttribute("aria-pressed","false");
+      b.addEventListener("click", function(){ ntState.color=col; Array.prototype.forEach.call(ntColors.children,function(c){c.setAttribute("aria-pressed",c===b?"true":"false");}); });
+      ntColors.appendChild(b);
+    });
+    ICON_CHOICES.forEach(function(ic){
+      var b=document.createElement("button"); b.type="button"; b.className="ic"; b.innerHTML=iconSvg(ic);
+      b.setAttribute("aria-label","אייקון "+ic); b.setAttribute("aria-pressed","false");
+      b.addEventListener("click", function(){ ntState.icon=ic; Array.prototype.forEach.call(ntIcons.children,function(c){c.setAttribute("aria-pressed",c===b?"true":"false");}); });
+      ntIcons.appendChild(b);
+    });
+  })();
+  function openNewType(){
+    ntName.value=""; ntState.color=PALETTE[0]; ntState.icon=ICON_CHOICES[0];
+    Array.prototype.forEach.call(ntColors.children,function(c,i){c.setAttribute("aria-pressed",i===0?"true":"false");});
+    Array.prototype.forEach.call(ntIcons.children,function(c,i){c.setAttribute("aria-pressed",i===0?"true":"false");});
+    newTypePanel.classList.add("open"); setTimeout(function(){ntName.focus();},40);
+  }
+  function closeNewType(){ newTypePanel.classList.remove("open"); }
+  function saveNewType(){
+    var name=ntName.value.trim(); if(!name){ ntName.focus(); return; }
+    var t={id:"c"+uid(), label:name, color:ntState.color, icon:ntState.icon};
+    customTypes.push(t); saveTypes();
+    renderTypeOptions(); selectType(t.id); closeNewType();
+  }
+  document.getElementById("ntSave").addEventListener("click", saveNewType);
+  document.getElementById("ntCancel").addEventListener("click", closeNewType);
+  ntName.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); saveNewType(); } });
+
+  /* ---- wiring ---- */
+  fTitle.addEventListener("input", function(){ if(cur.ev){ cur.ev.title=fTitle.value; saveEvents(); } });
+  document.getElementById("addTaskBtn").addEventListener("click", addTask);
+  newTask.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); addTask(); } });
+  document.getElementById("prevBtn").addEventListener("click", function(){ if(current>0){current--; render();} });
+  document.getElementById("nextBtn").addEventListener("click", function(){ if(current<RANGE-1){current++; render();} });
+  document.getElementById("todayBtn").addEventListener("click", function(){ var n=new Date(); var idx=(n.getFullYear()-START.y)*12+(n.getMonth()-START.m); if(idx>=0&&idx<RANGE)current=idx; render(); });
+  document.getElementById("doneBtn").addEventListener("click", closeEditor);
+  document.getElementById("closeBtn").addEventListener("click", closeEditor);
+  document.getElementById("deleteBtn").addEventListener("click", deleteEvent);
+  overlay.addEventListener("click", function(e){ if(e.target===overlay) closeEditor(); });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape"&&overlay.classList.contains("open")) closeEditor(); });
+
+  /* ---- theme ---- */
+  var themeBtn=document.getElementById("themeBtn");
+  function applyTheme(t){ if(t==="light"||t==="dark") document.documentElement.setAttribute("data-theme",t); else document.documentElement.removeAttribute("data-theme"); render(); buildLegend(); }
+  themeBtn.addEventListener("click", function(){ var c=document.documentElement.getAttribute("data-theme"); var isDark=c?c==="dark":window.matchMedia("(prefers-color-scheme:dark)").matches; var next=isDark?"light":"dark"; try{localStorage.setItem(K_THEME,next);}catch(e){} applyTheme(next); });
+  (function(){ var s=null; try{s=localStorage.getItem(K_THEME);}catch(e){} if(s) document.documentElement.setAttribute("data-theme",s); })();
+
+  /* ---- legend ---- */
+  function buildLegend(){
+    var lg=document.getElementById("legend"); lg.innerHTML='<span class="lbl">סוגי אירועים:</span>';
+    allTypes().forEach(function(t){
+      var s=document.createElement("span"); s.className="item"; s.style.setProperty("--c",t.color);
+      s.innerHTML='<span class="swatch">'+iconSvg(t.icon)+'</span>'+t.label;
+      lg.appendChild(s);
+    });
+  }
+
+  /* ---- backup / restore ---- */
+  var toastEl=document.getElementById("toast"), toastT;
+  function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("show"); },2400); }
+
+  function exportData(){
+    var payload={ app:"sprint-calendar", v:3, exportedAt:new Date().toISOString(), events:events, types:customTypes, todos:todos };
+    var text=JSON.stringify(payload,null,2);
+    var d=new Date(); var pad=function(n){return String(n).padStart(2,"0");};
+    var name="sprint-backup-"+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"-"+pad(d.getHours())+pad(d.getMinutes())+".json";
+    try{
+      var blob=new Blob([text],{type:"application/json"});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); },1500);
+      toast("קובץ הגיבוי הורד ✓");
+    }catch(e){
+      // fallback for restricted environments: open the JSON so it can be copied/saved
+      try{ var w=window.open("","_blank"); w.document.write("<pre style='white-space:pre-wrap;font:13px monospace;direction:ltr'>"+text.replace(/</g,"&lt;")+"</pre>"); toast("נפתח גיבוי להעתקה"); }
+      catch(e2){ toast("הדפדפן חוסם הורדה כאן"); }
+    }
+  }
+
+  function importData(file){
+    var reader=new FileReader();
+    reader.onload=function(){
+      try{
+        var p=JSON.parse(reader.result);
+        if(p.events && typeof p.events==="object"){ events=p.events; saveEvents(); }
+        if(p.types && p.types.length!=null){ customTypes=p.types; saveTypes(); }
+        if(p.todos && p.todos.cols){ todos=p.todos; saveTodos(); }
+        renderTodos(); buildLegend(); render();
+        toast("הנתונים שוחזרו בהצלחה ✓");
+      }catch(e){ toast("קובץ גיבוי לא תקין"); }
+    };
+    reader.onerror=function(){ toast("שגיאה בקריאת הקובץ"); };
+    reader.readAsText(file);
+  }
+
+  document.getElementById("exportBtn").addEventListener("click", exportData);
+  var importFile=document.getElementById("importFile");
+  document.getElementById("importBtn").addEventListener("click", function(){ importFile.value=""; importFile.click(); });
+  importFile.addEventListener("change", function(){ if(importFile.files&&importFile.files[0]) importData(importFile.files[0]); });
+
+  renderTodos();
+  buildLegend();
+  render();
+})();
+</script>
+</body>
+</html>
+
